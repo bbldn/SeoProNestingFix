@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+  <name>SEO Pro Nesting Fix</name>
+  <code>seo_pro_nesting_fix</code>
+  <version>1.1</version>
+  <author>ttt</author>
+  <link>https://ttt.com</link>
+  <file path="catalog/controller/startup/seo_pro.php">
+    <operation>
+      <search><![CDATA[$categories = explode('_', $value);]]></search>
+      <add position="after"><![CDATA[$queries[] = 'category_id=' . end($categories); unset($data[$key]); break;]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/product/category.php">
+    <operation>
+      <search><![CDATA[$parts = explode('_', (string)$this->request->get['path']);]]></search>
+      <add position="after"><![CDATA[			$parts = explode('_', $this->getPathByCategory($this->request->get['path']));]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/product/category.php">
+    <operation>
+      <search><![CDATA[public function index()]]></search>
+      <add position="before"><![CDATA[    protected function getPathByCategory($category_id)
+    {
+        $category_id = (int)$category_id;
+        
+        if ($category_id < 1) {
+            return false;
+        }
+
+        static $path = null;
+        if (!isset($path)) {
+            $path = $this->cache->get('category.seopath');
+            if (!isset($path)) {
+                $path = array();
+            }
+        }
+
+        if (!isset($path[$category_id])) {
+            $max_level = 10;
+            $sql = "SELECT CONCAT_WS('_'";
+            for ($i = $max_level - 1; $i >= 0; $i--) {
+                $sql .= ",t${i}.category_id";
+            }
+            $sql .= ") AS path FROM " . DB_PREFIX . "category t0";
+            for ($i = 1; $i < $max_level; $i++) {
+                $sql .= " LEFT JOIN " . DB_PREFIX . "category t${i} ON (t${i}.category_id = t" . ($i - 1) . ".parent_id)";
+            }
+            $sql .= " WHERE t0.category_id = '" . $category_id . "'";
+            $query = $this->db->query($sql);
+            $path[$category_id] = $query->num_rows ? $query->row['path'] : false;
+            $this->cache->set('category.seopath', $path);
+        }
+        
+        return $path[$category_id];
+    }
+    ]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/product/product.php">
+    <operation>
+      <search><![CDATA[$parts = explode('_', (string)$this->request->get['path']);]]></search>
+      <add position="after"><![CDATA[			$parts = explode('_', $this->getPathByCategory($this->request->get['path']));]]></add>
+    </operation>
+  </file>
+  <file path="catalog/controller/product/product.php">
+    <operation>
+      <search><![CDATA[public function index()]]></search>
+      <add position="before"><![CDATA[    protected function getPathByCategory($category_id)
+    {
+        $category_id = (int)$category_id;
+        
+        if ($category_id < 1) {
+            return false;
+        }
+
+        static $path = null;
+        if (!isset($path)) {
+            $path = $this->cache->get('category.seopath');
+            if (!isset($path)) {
+                $path = array();
+            }
+        }
+
+        if (!isset($path[$category_id])) {
+            $max_level = 10;
+            $sql = "SELECT CONCAT_WS('_'";
+            for ($i = $max_level - 1; $i >= 0; $i--) {
+                $sql .= ",t${i}.category_id";
+            }
+            $sql .= ") AS path FROM " . DB_PREFIX . "category t0";
+            for ($i = 1; $i < $max_level; $i++) {
+                $sql .= " LEFT JOIN " . DB_PREFIX . "category t${i} ON (t${i}.category_id = t" . ($i - 1) . ".parent_id)";
+            }
+            $sql .= " WHERE t0.category_id = '" . $category_id . "'";
+            $query = $this->db->query($sql);
+            $path[$category_id] = $query->num_rows ? $query->row['path'] : false;
+            $this->cache->set('category.seopath', $path);
+        }
+        
+        return $path[$category_id];
+    }
+    ]]></add>
+    </operation>
+  </file>
+</modification>
